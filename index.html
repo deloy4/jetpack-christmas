@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jetpack Christmas Special</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;600;700&family=Mountains+of+Christmas:wght@700&display=swap" rel="stylesheet">
+<style>
+  /* Layout: one column, the game canvas first at 312:208, touch pad and a line of help under it.
+     A single dark look on purpose: the cave and the night sky behind the title. */
+  :root {
+    --bg: #070a14;
+    --panel: #121831;
+    --edge: #26315a;
+    --ink: #e6e9f2;
+    --muted: #8f9bbf;
+    --jet: #ffb24a;
+    --phase: #c9a8ff;
+    --font-body: "Rubik", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { background: var(--bg); color: var(--ink); }
+  .screen { max-width: 100%; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-body);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding-block: 20px 32px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .screen {
+    width: min(100%, 1100px, calc((100vh - 120px) * 312 / 208));
+    min-width: min(100%, 320px);
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    border-radius: 6px;
+    box-shadow: 0 0 0 2px var(--edge), 0 12px 40px rgba(0, 0, 0, 0.6);
+    touch-action: none;
+    outline: none;
+  }
+  canvas:focus-visible { box-shadow: 0 0 0 2px var(--jet), 0 12px 40px rgba(0, 0, 0, 0.6); }
+  .pad { display: none; gap: 20px; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; }
+  .dpad { display: grid; grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(2, 50px); gap: 8px; }
+  .acts { display: grid; grid-template-columns: repeat(2, 72px); gap: 8px; }
+  .pad button {
+    font: 600 15px var(--font-body);
+    color: var(--ink);
+    background: var(--panel);
+    border: 2px solid var(--edge);
+    border-radius: 10px;
+    height: 50px;
+    touch-action: none;
+  }
+  .pad button:active { background: var(--edge); }
+  .dpad [data-key="ArrowUp"] { grid-column: 2; }
+  .dpad [data-key="ArrowLeft"] { grid-column: 1; grid-row: 2; }
+  .dpad [data-key="ArrowDown"] { grid-column: 2; grid-row: 2; }
+  .dpad [data-key="ArrowRight"] { grid-column: 3; grid-row: 2; }
+  .acts [data-key="v-jet"] { color: var(--jet); }
+  .acts [data-key="v-phase"] { color: var(--phase); }
+  @media (pointer: coarse) { .pad { display: flex; } }
+  p { margin: 0; max-width: 1100px; color: var(--muted); font-size: 14px; line-height: 1.55; text-align: center; }
+</style>
+</head>
+<body>
+<div class="screen"><canvas id="game" tabindex="0" aria-label="Jetpack Christmas Special game"></canvas></div>
+  <div class="pad" aria-label="Touch controls">
+    <div class="dpad">
+      <button data-key="ArrowUp" aria-label="Up">▲</button>
+      <button data-key="ArrowLeft" aria-label="Left">◀</button>
+      <button data-key="ArrowDown" aria-label="Down">▼</button>
+      <button data-key="ArrowRight" aria-label="Right">▶</button>
+    </div>
+    <div class="acts">
+      <button data-key="v-jet">Jet</button>
+      <button data-key="v-phase">Phase</button>
+      <button data-key="Escape">Retry</button>
+      <button data-key="Enter">Start</button>
+    </div>
+  </div>
+  <p>Collect every gift and the door at the end opens. The arrows walk and climb, Alt or Z fires the jetpack, and Ctrl, Enter or X runs the Phase Shifter, which tunnels through brick but not grey stone. Hold Down while flying to keep your height, and press Down on a button or teleporter to use it. Esc loses this Santa when you're stuck, + and − change the game speed, P pauses and M turns the sound off.</p>
+  <script src="shapes.js"></script>
+  <script src="levels.js"></script>
+  <script src="art.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

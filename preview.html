@@ -1,0 +1,29 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Art preview</title>
+<style>body{margin:0;background:#000}canvas{display:block}</style>
+<canvas id="c"></canvas>
+<script src="shapes.js"></script>
+<script src="levels.js"></script>
+<script src="art.js"></script>
+<script>
+  // preview.html?level=1&scale=4 draws one level statically, for checking the art
+  const q = new URLSearchParams(location.search);
+  const L = LEVELS[(+q.get('level') || 1) - 1], S = +q.get('scale') || 4;
+  const c = document.getElementById('c');
+  c.width = 26 * T * S; c.height = 16 * T * S;
+  const g = c.getContext('2d');
+  g.scale(S, S);
+  drawLevelStatic(g, 26, 16, (cx, cy) => cx < 0 || cy < 0 || cx > 25 || cy > 15 ? -1 : L.tiles[cy * 26 + cx]);
+  const [sx, sy] = L.start;
+  drawSanta(g, (sx - 1) * T, (sy - 1) * T, { face: 1, walk: 0, mode: 'stand', thrust: 0 }, 0.3);
+  drawSanta(g, (sx + 1) * T, (sy - 2) * T, { face: -1, walk: 1, mode: 'fly', thrust: 1 }, 0.3);
+  drawSanta(g, 12 * T, 12 * T, { face: 1, walk: 1, mode: 'climb', thrust: 0 }, 0.3);
+  drawSanta(g, 10 * T, 9 * T, { face: 1, walk: 1.2, mode: 'walk', thrust: 0, shield: true }, 0.3);
+  drawDoor(g, (L.door[0] - 1) * T, (L.door[1] - 1) * T, 0, 0.3);
+  if (q.get('monsters')) {
+    g.fillStyle = 'rgba(0,0,0,0.7)'; g.fillRect(0, 0, 26 * T, 5 * T);
+    for (let f = 0; f < 48; f++) drawMonster(g, f, (f % 24) * 13 + 1, Math.floor(f / 24) * 14 + 2, 0.3, false);
+    for (let k = 0; k < 3; k++) drawPickup(g, k, k * 14 + 2, 34, 0.3, false);
+  }
+</script>
