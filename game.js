@@ -610,8 +610,11 @@ function trackbot(m) {
     if (dir === 2) m.vx = 50;
     if (dir === 4) m.vy = -40;
     if (dir === 8) m.vy = 40;
-    if ((c === 2 || fR === 2 || fL === 2) && can[4]) m.vy = -25 - 36 * (m.vy < 0) + 41 * (m.vy > 0);
-    else if ((c === 3 || fR === 3 || fL === 3) && can[8]) m.vy = 25 + 36 * (m.vy > 0) - 41 * (m.vy < 0);
+    // moving ladders only change the speed of a robot that is climbing (0c7b:6c42 skips them at vy = 0)
+    if (m.vy !== 0) {
+      if ((c === 2 || fR === 2 || fL === 2) && can[4]) m.vy = -25 - 36 * (m.vy < 0) + 41 * (m.vy > 0);
+      if ((c === 3 || fR === 3 || fL === 3) && can[8]) m.vy = 25 + 36 * (m.vy > 0) - 41 * (m.vy < 0);
+    }
     if (dir === 4 || dir === 8) { const r = px % 12; if (r >= 6) m.vx = 32; else if (r >= 1) m.vx = -32; }
   } else { dir = 0; m.vx = 0; m.vy = 64; }
   m.st = dir;
