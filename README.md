@@ -18,6 +18,16 @@ stuck, + and − change the game speed, P pauses and M turns the sound off. On a
 buttons appear under the game. The original's hidden keys still work: hold Tab and 2, then press
 L for an extra life, F for a full tank, I for a shield or S to skip the level.
 
+## High scores
+
+When a game ends, the player types a name and the score goes on a board everyone shares, with an
+All Time list and a This Week list (weeks start Sunday at midnight, Mountain time). The scores are
+kept in the `arcade-scores` Supabase project, in one `scores` table for both games. Browsers can only
+call two database functions, `submit_score` and `get_leaderboard`, so nobody can change or delete a
+score from the page. To remove a bad score, delete its row in the Supabase table editor. Games where
+a cheat key was used don't post a score. `leaderboard.js` is the same file in both game repos, so
+copy any change to it across.
+
 ## How it runs
 
 The game runs at 31.6 frames a second, which is what level 1 measured in the original running
@@ -29,10 +39,11 @@ frames so movement stays smooth.
 - `art.js`, all the drawing.
 - `levels.js`, the ten levels decoded from the original `JETLEV.DAT`.
 - `shapes.js`, the rounded corners and stone edges of each brick tile, read from the original sprite sheet.
+- `leaderboard.js`, the shared high score board (the same file is in the Graveyard Gridiron repo).
 - `preview.html`, a still view of one level's art (`preview.html?level=3&monsters=1`).
 
 There is no build step; open `index.html` in a browser.
 
 Differences from the original: one player only, no level editor or demo, and the frame rate is
-the same on every level (the original speeds up on levels with many monsters). High scores are
-kept in your browser. The status bar adds a gift count.
+the same on every level (the original speeds up on levels with many monsters). Everyone who plays
+shares one high score board, with All Time and This Week lists. The status bar adds a gift count.

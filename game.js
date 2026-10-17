@@ -119,6 +119,7 @@ let step = function () {
     if (k === 'Space') G.info = G.info ? 0 : 150;
     if (k === 'KeyQ') return endLife('quit');
     if (held.has('Tab') && held.has('Digit2')) {
+      if (['KeyS', 'KeyL', 'KeyF', 'KeyI'].includes(k)) G.cheated = true;
       if (k === 'KeyS') return endLife('skip');
       if (k === 'KeyL') { G.lives = Math.min(100, G.lives + 1); sfx('life'); }
       if (k === 'KeyF') { S.fuel = 10000; sfx('fuel'); }
@@ -798,20 +799,24 @@ function toTitle() {
 
 function newGame() {
   srand(Date.now() & 0xffff);
-  G.level = 0; G.score = 0; G.lives = 3; G.skips = 0; G.speed = 5;
+  G.level = 0; G.score = 0; G.lives = 3; G.skips = 0; G.speed = 5; G.cheated = false;
   toReady();
 }
 
-// ---------- high scores (JETPACK.HIS kept 15; here they stay in this browser) ----------
+// ---------- high scores (JETPACK.HIS kept 15 on one PC; here everyone shares one board, see leaderboard.js) ----------
 
-function loadScores() {
-  try { return JSON.parse(localStorage.getItem('jetpack-scores') || '[]'); } catch (e) { return []; }
+let best = null;
+function refreshBest() { Leaderboard.best().then((b) => { best = b; }).catch(() => { /* offline */ }); }
+
+function showScores(score = 0) {
+  held.clear(); pressed.length = 0; stopLoops();
+  const ended = score > 0 || G.screen === 'board';
+  Leaderboard.open({
+    score, cheated: G.cheated,
+    closeLabel: ended ? 'Play again' : 'Back',
+    onClose: () => { refreshBest(); if (ended) newGame(); },
+  });
 }
-function saveScores(list) {
-  try { localStorage.setItem('jetpack-scores', JSON.stringify(list)); } catch (e) { /* private window */ }
-}
-let lastName = '';
-try { lastName = localStorage.getItem('jetpack-name') || ''; } catch (e) { /* no storage */ }
 
 // ---------- sound: new effects, made with Web Audio ----------
 
@@ -1122,8 +1127,7 @@ function drawTitle(dt, t) {
   centerText(blink ? 'Press Enter to start' : '', 120, 8, '#ffd86a', 600);
   centerText('Arrows move and climb  \u00b7  Alt or Z jetpack  \u00b7  Ctrl, Enter or X Phase Shifter', 140, 4.6, '#aab3cf', 500);
   centerText('Down presses buttons and uses teleporters  \u00b7  Esc loses this Santa  \u00b7  P pause  \u00b7  M sound', 148, 4.6, '#aab3cf', 500);
-  const best = loadScores()[0];
-  if (best) centerText(`Best: ${best.name || '\u2014'}  ${best.score}`, 166, 5, '#8f9bbf', 500);
+  if (best) centerText(`Best: ${best.name}  ${best.score}`, 166, 5, '#8f9bbf', 500);
   centerText('H high scores', 176, 4.6, '#8f9bbf', 500);
   centerText('Original game \u00a9 1993 Adam Pedersen, Software Creations. Rebuilt with new art and sound.', 200, 4, '#5d6890', 500);
 }
@@ -1156,31 +1160,6 @@ function drawOverlayText(lines) {
   lines.forEach(([s, size, color, font], i) => centerText(s, 80 + i * 16, size, color, 700, font));
 }
 
-function drawScores(t) {
-  ctx.fillStyle = '#070a14';
-  ctx.fillRect(0, 0, PLAY_W, PLAY_H + HUD_H);
-  drawSnow(1 / 60);
-  panel(66, 8, 180, 192);
-  centerText('HIGH SCORES', 22, 10, '#ff5a50', 800);
-  const list = loadScores();
-  ctx.font = `600 6px ${FONT_UI}`;
-  ctx.textBaseline = 'middle';
-  for (let i = 0; i < 15; i++) {
-    const e = list[i], y = 38 + i * 10;
-    const editing = G.screen === 'enter' && i === G.rank;
-    ctx.fillStyle = editing ? '#ffd86a' : '#aab3cf';
-    ctx.fillText(String(i + 1).padStart(2, ' ') + '.', 84, y);
-    let name = e ? e.name : '';
-    if (editing) name = G.typing + (Math.floor(t * 3) % 2 ? '_' : ' ');
-    ctx.fillStyle = editing ? '#ffd86a' : '#e6e9f2';
-    ctx.fillText(name, 100, y);
-    ctx.textAlign = 'right';
-    ctx.fillText(e ? String(e.score) : '', 228, y);
-    ctx.textAlign = 'left';
-  }
-  centerText(G.screen === 'enter' ? 'Type your name, then Enter' : 'Press any key', 200, 5, '#8f9bbf', 500);
-}
-
 function draw(alpha, dt) {
   const t = G.t;
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
@@ -1188,12 +1167,11 @@ function draw(alpha, dt) {
   switch (G.screen) {
     case 'title': drawTitle(dt, t); break;
     case 'ready': drawReady(t); break;
-    case 'scores': case 'enter': drawScores(t); break;
     case 'congrats':
       drawPlay(1, t); drawHud(t);
       drawOverlayText([['CONGRATULATIONS!', 12, '#ffd86a'], ['You have completed all 10 levels', 7, '#e6e9f2'], ['of the Jetpack Christmas Special', 7, '#e6e9f2'], ['Your game will continue. Press any key.', 5, '#aab3cf']]);
       break;
-    case 'gameover':
+    case 'gameover': case 'board':
       drawPlay(1, t); drawHud(t);
       drawOverlayText([['GAME OVER', 14, '#ff5a50'], [`Score ${G.score}`, 8, '#ffd86a']]);
       break;
@@ -1246,29 +1224,17 @@ function frame(now) {
     }
     if (G.bonusStep >= 100 && G.timer > 100 * 18 + 500) { nextLevel(); toReady(); }
   } else if (G.screen === 'gameover') {
-    if (G.timer > 2000) {
-      const list = loadScores();
-      let rank = list.findIndex((e) => e.score < G.score);
-      if (rank < 0 && list.length < 15) rank = list.length;
-      if (rank >= 0 && rank < 15 && G.score > 0) {
-        list.splice(rank, 0, { name: '', score: G.score });
-        list.length = Math.min(list.length, 15);
-        saveScores(list);
-        G.rank = rank; G.typing = lastName; G.screen = 'enter';
-      } else { G.screen = 'scores'; }
-      pressed.length = 0;
-    }
-  } else if (G.screen === 'ready' || G.screen === 'title' || G.screen === 'scores' || G.screen === 'congrats') {
+    if (G.timer > 2000) { G.screen = 'board'; showScores(G.score); }
+  } else if (G.screen === 'ready' || G.screen === 'title' || G.screen === 'congrats') {
     if (pressed.length) {
       const k = pressed.shift();
       pressed.length = 0;
       if (G.screen === 'title') {
         if (k === 'Enter' || k === 'KeyS' || k === 'Space') newGame();
-        else if (k === 'KeyH') { G.screen = 'scores'; }
+        else if (k === 'KeyH') showScores();
       } else if (G.screen === 'ready' && G.timer > 300) {
         G.screen = 'intro'; G.timer = 0;
-      } else if (G.screen === 'scores') toTitle();
-      else if (G.screen === 'congrats') { G.screen = 'ready'; loadLevel(); G.timer = 0; }
+      } else if (G.screen === 'congrats') { G.screen = 'ready'; loadLevel(); G.timer = 0; }
     }
   }
 
@@ -1277,24 +1243,12 @@ function frame(now) {
 }
 
 function onKey(e, down) {
+  if (Leaderboard.isOpen()) return;
   const code = e.code;
   if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space', 'Tab', 'AltLeft', 'AltRight', 'Backspace', 'Quote', 'Enter', 'ControlLeft', 'ControlRight'].includes(code)) e.preventDefault();
   ensureAudio();
   if (audio && audio.state === 'suspended') audio.resume();
   if (!down) { held.delete(code); return; }
-  if (G.screen === 'enter') {
-    if (e.key === 'Enter' || e.key === 'Escape') {
-      const list = loadScores();
-      if (list[G.rank]) list[G.rank].name = G.typing.trim();
-      saveScores(list);
-      lastName = G.typing.trim();
-      try { localStorage.setItem('jetpack-name', lastName); } catch (err) { /* no storage */ }
-      G.screen = 'scores';
-    } else if (e.key === 'Backspace') G.typing = G.typing.slice(0, -1);
-    else if (e.key.length === 1 && /[A-Za-z0-9 .,\-$:!?/]/.test(e.key) && G.typing.length < 9) G.typing += e.key.toUpperCase();
-    e.preventDefault();
-    return;
-  }
   if (e.repeat) return;
   held.add(code);
   if (code === 'KeyM') { muted = !muted; if (muted) stopLoops(); return; }
@@ -1337,13 +1291,17 @@ function start() {
   window.addEventListener('resize', resize);
   canvas.addEventListener('pointerdown', () => { ensureAudio(); canvas.focus(); if (G.screen === 'title') pressed.push('Enter'); else pressed.push('Pointer'); });
   wireTouch();
+  const scoresButton = document.querySelector('[data-scores]');
+  scoresButton.hidden = false;
+  scoresButton.addEventListener('click', () => { if (G.screen === 'title') showScores(); });
   resize();
   toTitle();
+  refreshBest();
   // For checking the game from a script: ?level=3&keys=40:R,60:JD starts that level and holds keys
   // for so many frames each (L R U D J P = left, right, up, down, jet, Phase Shifter).
   const q = new URLSearchParams(location.search);
   if (q.get('level')) {
-    G.level = +q.get('level') - 1; loadLevel(); G.screen = 'play';
+    G.level = +q.get('level') - 1; loadLevel(); G.screen = 'play'; G.cheated = true;
     if (q.get('fuel')) S.fuel = 10000;
     const plan = (q.get('keys') || '').split(',').filter(Boolean).map((p) => p.split(':'));
     const names = { L: 'ArrowLeft', R: 'ArrowRight', U: 'ArrowUp', D: 'ArrowDown', J: 'KeyZ', P: 'KeyX' };
