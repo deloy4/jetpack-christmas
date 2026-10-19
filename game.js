@@ -1297,12 +1297,15 @@ function start() {
   resize();
   toTitle();
   refreshBest();
-  // For checking the game from a script: ?level=3&keys=40:R,60:JD starts that level and holds keys
-  // for so many frames each (L R U D J P = left, right, up, down, jet, Phase Shifter).
+  // ?level=3 starts that level. For checking the game from a script, &keys=40:R,60:JD also holds keys
+  // for so many frames each, and the keyboard is ignored (L R U D J P = left, right, up, down, jet, Phase Shifter).
   const q = new URLSearchParams(location.search);
-  if (q.get('level')) {
-    G.level = +q.get('level') - 1; loadLevel(); G.screen = 'play'; G.cheated = true;
+  const want = parseInt((q.get('level') || '').replace(/\D/g, ''), 10);
+  if (want >= 1) {
+    G.level = Math.min(want, LEVELS.length) - 1; loadLevel(); G.screen = 'play'; G.cheated = true;
     if (q.get('fuel')) S.fuel = 10000;
+  }
+  if (want >= 1 && q.get('keys')) {
     const plan = (q.get('keys') || '').split(',').filter(Boolean).map((p) => p.split(':'));
     const names = { L: 'ArrowLeft', R: 'ArrowRight', U: 'ArrowUp', D: 'ArrowDown', J: 'KeyZ', P: 'KeyX' };
     let n = 0;
@@ -1313,8 +1316,8 @@ function start() {
       for (const [frames, keys = ''] of plan) { if (f < +frames) { for (const k of keys) held.add(names[k]); break; } f -= +frames; }
       return realStep();
     };
-    for (let i = +(q.get('run') || 0); i > 0 && G.screen === 'play'; i--) step();
   }
+  for (let i = want >= 1 ? +(q.get('run') || 0) : 0; i > 0 && G.screen === 'play'; i--) step();
   requestAnimationFrame(frame);
 }
 
