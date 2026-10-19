@@ -1169,7 +1169,7 @@ function draw(alpha, dt) {
     case 'ready': drawReady(t); break;
     case 'congrats':
       drawPlay(1, t); drawHud(t);
-      drawOverlayText([['CONGRATULATIONS!', 12, '#ffd86a'], ['You have completed all 10 levels', 7, '#e6e9f2'], ['of the Jetpack Christmas Special', 7, '#e6e9f2'], ['Your game will continue. Press any key.', 5, '#aab3cf']]);
+      drawOverlayText([['CONGRATULATIONS!', 12, '#ffd86a'], ['You have completed all ' + LEVELS.length + ' levels', 7, '#e6e9f2'], ['of the Jetpack Christmas Special', 7, '#e6e9f2'], ['Your game will continue. Press any key.', 5, '#aab3cf']]);
       break;
     case 'gameover': case 'board':
       drawPlay(1, t); drawHud(t);

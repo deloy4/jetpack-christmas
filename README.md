@@ -3,7 +3,8 @@
 A browser rebuild of Jetpack Christmas Special, the 1993 DOS game by Adam Pedersen that Software
 Creations gave away as freeware. Play it at https://deloy4.github.io/jetpack-christmas/
 
-All ten original levels are here, and the rules come from reading the original program: walking
+All ten original levels are here, plus ten new ones (levels 11 to 20) built from the same tiles,
+monsters and mechanisms. The rules come from reading the original program: walking
 and jetpack speeds, gravity, fuel, ladders, ice, sludge, conveyors, the Phase Shifter's dig and
 regrow times, all eight monsters, buttons, barriers, teleporters, the pop-up pickups, scoring and
 lives. The art and sound are new. Every tile and sprite is drawn with canvas paths, keeping the
@@ -37,7 +38,8 @@ frames so movement stays smooth.
 - `index.html`, the page.
 - `game.js`, the game: the frame loop in the original's order, the monsters, and the screens around play.
 - `art.js`, all the drawing.
-- `levels.js`, the ten levels decoded from the original `JETLEV.DAT`.
+- `levels.js`, the ten levels decoded from the original `JETLEV.DAT`, then levels 11 to 20, made
+  for this rebuild.
 - `shapes.js`, the rounded corners and stone edges of each brick tile, read from the original sprite sheet.
 - `leaderboard.js`, the shared high score board (the same file is in the Graveyard Gridiron repo).
 - `preview.html`, a still view of one level's art (`preview.html?level=3&monsters=1`).
